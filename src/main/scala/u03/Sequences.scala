@@ -23,6 +23,10 @@ object Sequences: // Essentially, generic linkedlists
       case Cons(_, t)            => filter(t)(pred)
       case Nil()                 => Nil()
 
+    def concat[A](l: Sequence[A])(other: Sequence[A]): Sequence[A] = l match
+      case Cons(h, t) => Cons(h, concat(t)(other))
+      case Nil() => other
+
     @tailrec
     def contains[A](l: Sequence[A])(elem: A): Boolean = l match
       case Cons(h, t) => h == elem || contains(t)(elem)
