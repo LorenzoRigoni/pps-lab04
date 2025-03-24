@@ -1,6 +1,7 @@
 package tasks.adts
 import u03.extensionmethods.Optionals.*
 import u03.extensionmethods.Sequences.*
+import Sequence.*
 
 /*  Exercise 2: 
  *  Implement the below trait, and write a meaningful test.
@@ -111,21 +112,52 @@ object SchoolModel:
        */
       def hasCourse(name: String): Boolean
   object BasicSchoolModule extends SchoolModule:
-    override type School = Nothing
-    override type Teacher = Nothing
-    override type Course = Nothing
+    case class SchoolImpl(teachers: Sequence[Teacher])
 
-    def teacher(name: String): Teacher = ???
-    def course(name: String): Course = ???
-    def emptySchool: School = ???
+    case class TeacherImpl(name: String, course: Sequence[Course])
+
+    case class CourseImpl(name: String)
+
+    override type School = SchoolImpl
+    override type Teacher = TeacherImpl
+    override type Course = CourseImpl
+
+    extension (teacher: Teacher)
+      def getName: String = teacher.name
+      def getCourses: Sequence[Course] = teacher.course
+
+    extension (course: Course)
+      def getName: String = course.name
+
+    def teacher(name: String): Teacher = TeacherImpl(name, Nil())
+
+    def course(name: String): Course = CourseImpl(name)
+
+    def emptySchool: School = SchoolImpl(Nil())
 
     extension (school: School)
-      def courses: Sequence[String] = ???
-      def teachers: Sequence[String] = ???
-      def setTeacherToCourse(teacher: Teacher, course: Course): School = ???
-      def coursesOfATeacher(teacher: Teacher): Sequence[Course] = ???
-      def hasTeacher(name: String): Boolean = ???
-      def hasCourse(name: String): Boolean = ???
+      def courses: Sequence[String] = school.teachers.flatMap(_.getCourses).map(_.getName)
+
+      def teachers: Sequence[String] = school.teachers.map(_.getName)
+
+      def setTeacherToCourse(teacher: Teacher, course: Course): School =
+        val updatedTeachers = school.teachers.map(
+          t => TeacherImpl(t.getName, t.getCourses.concat(Cons(course, Nil()))))
+        if school.teachers.contains(teacher) then
+          SchoolImpl(updatedTeachers)
+        else
+          SchoolImpl(Cons(TeacherImpl(teacher.getName, Cons(course, Nil())), school.teachers))
+
+      def coursesOfATeacher(teacher: Teacher): Sequence[Course] = teacher.getCourses
+
+      def hasTeacher(name: String): Boolean = school match
+        case SchoolImpl(t) => t.contains(TeacherImpl(name, Nil()))
+
+      def hasCourse(name: String): Boolean = school match
+        case SchoolImpl(t) => t match
+          case Cons(h, t) => h.getCourses.contains(CourseImpl(name))
+          case Nil() => false
+
 @main def examples(): Unit =
   import SchoolModel.BasicSchoolModule.*
   val school = emptySchool
