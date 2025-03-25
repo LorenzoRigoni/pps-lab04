@@ -123,11 +123,15 @@ object SchoolModel:
     override type Course = CourseImpl
 
     extension (teacher: Teacher)
-      def getName: String = teacher.name
-      def getCourses: Sequence[Course] = teacher.course
+      def getName: String = teacher match
+        case TeacherImpl(n, _) => n
+
+      def getCourses: Sequence[Course] = teacher match
+        case TeacherImpl(_, c) => c
 
     extension (course: Course)
-      def getName: String = course.name
+      def getName: String = course match
+        case CourseImpl(n) => n
 
     def teacher(name: String): Teacher = TeacherImpl(name, Nil())
 
